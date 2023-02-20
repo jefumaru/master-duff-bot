@@ -1,20 +1,32 @@
+from dateutil.relativedelta import relativedelta
+from datetime import datetime, timezone
+
 import discord
 import json
-import os
 
 RECORDING_CHANNEL = 933895315373838416
 TEAMUP_SUPPORT_MSG = "Visit the Team Up Discord Support Server"
 RECORD_UNDO_MSG = "Result Removed"
 
+TSV_LINE = "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}"
+
+ELITE_LEVEL_ELO = 1500
+PRO_LEVEL_ELO = 1350
+
+ONE_MONTH_AGO = datetime.now(timezone.utc) + relativedelta(months = -1)
+THREE_MONTHS_AGO = datetime.now(timezone.utc) + relativedelta(months = -3)
+
 ACCOUNT_ALIAS_LOOKUP = {
     "Blue Toad": "BT",
+    "sdreb3421": "Dr. Ebick",
     "drolo253": "Drolo",
     "Drolo253": "Drolo",
     "Fat Bowser": "Fat BiddyBuddy",
     "\\ud835\\udcd5\\ud835\\udcfb\\ud835\\udcf8\\ud835\\udcfc\\ud835\\udcfd\\ud835\\udd02 \\ud835\\udcdc\\ud835\\udcf8\\ud835\\udcf8\\ud835\\udcf7": "Frosty Moon",
     "Kairi (Uncertified Player)": "Goldy",
-    "*Henry*": "**Henry**",
-    "__Henry__": "**Henry**",
+    "**Henry**": "Henry",
+    "*Henry*": "Henry",
+    "__Henry__": "Henry",
     "LeSinge\\ud83d\\udc12": "LeSinge",
     "[T\\u00e4hl] LeSinge\\ud83d\\udc12": "LeSinge",
     "Lucifurs friend": "LucifursFriend",
@@ -43,7 +55,6 @@ async def on_message(message):
     if message.author.display_name != "manmaru":
         return
 
-    print(message.content)
     if message.content.startswith('Are you Master Duff'):
         await message.channel.send('Yes, indeed I am')
 
@@ -88,55 +99,157 @@ async def produceStats():
             before_elo = record["before_elo"]
             if player_account not in elo_stats.keys():
                 elo_stats[player_account] = {
-                    "wins": 0,
-                    "losses": 0,
-                    "ties": 0,
-                    "max_elo": before_elo,
-                    "min_elo": before_elo,
+                    "rounds": 0,
+                    "wins": [],
+                    "losses": [],
+                    "ties": [],
+                    "max_elo_full": before_elo,
+                    "min_elo_full": before_elo,
+                    "max_elo_3m": before_elo,
+                    "min_elo_3m": before_elo,
+                    "max_elo_1m": before_elo,
+                    "min_elo_1m": before_elo,
                     "first_round": time_stamp,
                     "last_round": time_stamp,
                 }
 
-            elo_stats[player_account]["wins"] += len(record["wins"])
-            elo_stats[player_account]["losses"] += len(record["losses"])
-            elo_stats[player_account]["ties"] += len(record["ties"])
+            elo_stats[player_account]["rounds"] += 1
+            elo_stats[player_account]["wins"].extend(record["wins"])
+            elo_stats[player_account]["losses"].extend(record["losses"])
+            elo_stats[player_account]["ties"].extend(record["ties"])
 
             # Messages are scanned in descending order
             elo_stats[player_account]["first_round"] = time_stamp
 
             after_elo = record["after_elo"]
-            if before_elo > elo_stats[player_account]["max_elo"]:
-                elo_stats[player_account]["max_elo"] = before_elo
-            if after_elo > elo_stats[player_account]["max_elo"]:
-                elo_stats[player_account]["max_elo"] = after_elo
 
-            if before_elo < elo_stats[player_account]["min_elo"]:
-                elo_stats[player_account]["min_elo"] = before_elo
-            if after_elo < elo_stats[player_account]["min_elo"]:
-                elo_stats[player_account]["min_elo"] = after_elo
+            # Update 1month min/max Elo
+            if time_stamp >= ONE_MONTH_AGO:
+                if before_elo > elo_stats[player_account]["max_elo_1m"]:
+                    elo_stats[player_account]["max_elo_1m"] = before_elo
+                if after_elo > elo_stats[player_account]["max_elo_1m"]:
+                    elo_stats[player_account]["max_elo_1m"] = after_elo
+
+                if before_elo < elo_stats[player_account]["min_elo_1m"]:
+                    elo_stats[player_account]["min_elo_1m"] = before_elo
+                if after_elo < elo_stats[player_account]["min_elo_1m"]:
+                    elo_stats[player_account]["min_elo_1m"] = after_elo
+
+            # Update 3month min/max Elo
+            if time_stamp >= THREE_MONTHS_AGO:
+                if before_elo > elo_stats[player_account]["max_elo_3m"]:
+                    elo_stats[player_account]["max_elo_3m"] = before_elo
+                if after_elo > elo_stats[player_account]["max_elo_3m"]:
+                    elo_stats[player_account]["max_elo_3m"] = after_elo
+
+                if before_elo < elo_stats[player_account]["min_elo_3m"]:
+                    elo_stats[player_account]["min_elo_3m"] = before_elo
+                if after_elo < elo_stats[player_account]["min_elo_3m"]:
+                    elo_stats[player_account]["min_elo_3m"] = after_elo
+
+            # Update min/max all-time Elo
+            if before_elo > elo_stats[player_account]["max_elo_full"]:
+                elo_stats[player_account]["max_elo_full"] = before_elo
+            if after_elo > elo_stats[player_account]["max_elo_full"]:
+                elo_stats[player_account]["max_elo_full"] = after_elo
+
+            if before_elo < elo_stats[player_account]["min_elo_full"]:
+                elo_stats[player_account]["min_elo_full"] = before_elo
+            if after_elo < elo_stats[player_account]["min_elo_full"]:
+                elo_stats[player_account]["min_elo_full"] = after_elo
 
     print("")
+    full_stats = calculuateSupplementalStats(elo_stats)
+    outputStats(full_stats)
+
+def calculuateSupplementalStats(elo_stats):
+    elite_players = getPlayersByMaxEloCutoff(elo_stats, ELITE_LEVEL_ELO)
+    print(json.dumps(elite_players))
+    print("")
+
+    all_players = elo_stats.keys()
+    for player in all_players:
+        elo_stats[player]["elite_wins"] = 0
+        elo_stats[player]["elite_losses"] = 0
+        elo_stats[player]["elite_ties"] = 0
+
+        for win_against_player in elo_stats[player]["wins"]:
+            if win_against_player in elite_players:
+                elo_stats[player]["elite_wins"] += 1
+
+        for lose_to_player in elo_stats[player]["losses"]:
+            if lose_to_player in elite_players:
+                elo_stats[player]["elite_losses"] += 1
+
+        for tie_with_player in elo_stats[player]["ties"]:
+            if tie_with_player in elite_players:
+                elo_stats[player]["elite_ties"] += 1
+
+    return elo_stats
+
+def outputStats(elo_stats):
+    print(TSV_LINE.format(
+        "Player Account",
+        "Total Rounds Played",
+        "Total Matchups",
+        "Total Wins",
+        "Total Losses",
+        "Total Ties",
+        "PCT",
+        "1500+ Matchups",
+        "Percent Matchups Against 1500+",
+        "1500+ Wins",
+        "1500+ Losses",
+        "1500+ Ties",
+        "1500+ PCT",
+        "Max Elo (All-Time)",
+        "Max Elo (3 months)",
+        "Max Elo (1 month)",
+        "Min Elo (All-Time)",
+        "Min Elo (3 months)",
+        "Min Elo (1 month)",
+        "First Recorded Round",
+        "Last Recorded Round",
+    ))
+
     sorted_players = sorted(elo_stats.keys(), key=str.lower)
     for player in sorted_players:
         player_stats = elo_stats[player]
-        total_matches = player_stats["wins"] + player_stats["losses"] + player_stats["ties"]
-        adjusted_wins = player_stats["wins"] + (0.5 * player_stats["ties"])
-        win_percentage = 1.0 * adjusted_wins / total_matches
-        if win_percentage == 1.0:
-            display_pct = "1.000"
-        else:
-            rounded_pct = round(win_percentage, 3)
-            display_pct = ("{0:.3f}".format(rounded_pct))[1:]
 
-        output = "{}: Matchups={}, {}-{}-{}, PCT={}, MaxElo={}, MinElo={}, FirstRound={}, LastRound={}".format(
+        win_count = len(player_stats["wins"])
+        loss_count = len(player_stats["losses"])
+        tie_count = len(player_stats["ties"])
+        total_matches = win_count + loss_count + tie_count
+
+        elite_win_count = player_stats["elite_wins"]
+        elite_loss_count = player_stats["elite_losses"]
+        elite_tie_count = player_stats["elite_ties"]
+        elite_matches = elite_win_count + elite_loss_count + elite_tie_count
+        elite_match_rate = round(100.0 * elite_matches / total_matches, 1)
+
+        show_last_3m = player_stats["last_round"] >= THREE_MONTHS_AGO
+        show_last_1m = player_stats["last_round"] >= ONE_MONTH_AGO
+
+        output = TSV_LINE.format(
             player,
+            player_stats["rounds"],
             total_matches,
-            player_stats["wins"],
-            player_stats["losses"],
-            player_stats["ties"],
-            display_pct,
-            player_stats["max_elo"],
-            player_stats["min_elo"],
+            win_count,
+            loss_count,
+            tie_count,
+            renderWinPercent(win_count, tie_count, total_matches),
+            elite_matches,
+            "{0:.1f}".format(elite_match_rate),
+            elite_win_count,
+            elite_loss_count,
+            elite_tie_count,
+            renderWinPercent(elite_win_count, elite_tie_count, elite_matches),
+            player_stats["max_elo_full"],
+            player_stats["max_elo_3m"] if show_last_3m else "",
+            player_stats["max_elo_1m"] if show_last_1m else "",
+            player_stats["min_elo_full"],
+            player_stats["min_elo_3m"] if show_last_3m else "",
+            player_stats["min_elo_1m"] if show_last_1m else "",
             player_stats["first_round"].strftime("%Y-%m-%d"),
             player_stats["last_round"].strftime("%Y-%m-%d"),
         )
@@ -206,5 +319,24 @@ def normalizeAccountName(account_name):
         return ACCOUNT_ALIAS_LOOKUP[sanitized_name]
 
     return account_name
+
+def renderWinPercent(win_count, tie_count, total_matches):
+    if total_matches == 0:
+        return ".000"
+
+    adjusted_wins = win_count + (0.5 * tie_count)
+    win_percentage = 1.0 * adjusted_wins / total_matches
+    if win_percentage == 1.0:
+        return "1.000"
+
+    rounded_pct = round(win_percentage, 3)
+    return ("{0:.3f}".format(rounded_pct))[1:]
+
+def getPlayersByMaxEloCutoff(stats_per_player, max_elo_cutoff):
+    exceeding_players = []
+    for player in stats_per_player.keys():
+        if stats_per_player[player]["max_elo_full"] > max_elo_cutoff:
+            exceeding_players.append(player)
+    return exceeding_players
 
 client.run('the-key')
