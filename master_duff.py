@@ -8,10 +8,12 @@ RECORDING_CHANNEL = 933895315373838416
 TEAMUP_SUPPORT_MSG = "Visit the Team Up Discord Support Server"
 RECORD_UNDO_MSG = "Result Removed"
 
-TSV_LINE = "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}"
+SHOW_OPPONENT_STATS_FOR = None
+
+TSV_LINE = "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}"
 
 ELITE_LEVEL_ELO = 1500
-PRO_LEVEL_ELO = 1350
+PRO_LEVEL_ELO = 1400
 
 ONE_MONTH_AGO = datetime.now(timezone.utc) + relativedelta(months = -1)
 THREE_MONTHS_AGO = datetime.now(timezone.utc) + relativedelta(months = -3)
@@ -24,13 +26,16 @@ ACCOUNT_ALIAS_LOOKUP = {
     "Fat Bowser": "Fat BiddyBuddy",
     "\\ud835\\udcd5\\ud835\\udcfb\\ud835\\udcf8\\ud835\\udcfc\\ud835\\udcfd\\ud835\\udd02 \\ud835\\udcdc\\ud835\\udcf8\\ud835\\udcf8\\ud835\\udcf7": "Frosty Moon",
     "Kairi (Uncertified Player)": "Goldy",
+    "saru": "Goosebumps",
     "**Henry**": "Henry",
     "*Henry*": "Henry",
     "__Henry__": "Henry",
-    "LeSinge\\ud83d\\udc12": "LeSinge",
-    "[T\\u00e4hl] LeSinge\\ud83d\\udc12": "LeSinge",
+    "LeSinge": "Le Singe",
+    "LeSinge\\ud83d\\udc12": "Le Singe",
+    "[T\\u00e4hl] LeSinge\\ud83d\\udc12": "Le Singe",
     "Lucifurs friend": "LucifursFriend",
     "DoctahKush": "MastahKush",
+    "MiYong1986": "LadyMiYong",
     "Deputy MI-NEIGHBOR-GUY": "NEIGHBOR-GUY",
     "MI-NEIGHBOR-GUY": "NEIGHBOR-GUY",
     "Shawn2Sh\u00f8t": "Shawn2Shot",
@@ -64,7 +69,7 @@ async def produceStats():
     need_to_undo_count = 0
 
     print("Fetching messages...")
-    async for message in elo_channel.history(limit = 1000):
+    async for message in elo_channel.history(limit = 2900):
         if len(message.embeds) == 0:
             continue
 
@@ -104,11 +109,17 @@ async def produceStats():
                     "losses": [],
                     "ties": [],
                     "max_elo_full": before_elo,
+                    "max_elo_date": None,
                     "min_elo_full": before_elo,
                     "max_elo_3m": before_elo,
                     "min_elo_3m": before_elo,
                     "max_elo_1m": before_elo,
                     "min_elo_1m": before_elo,
+                    "cleared_1300_date": None,
+                    "cleared_1400_date": None,
+                    "cleared_1500_date": None,
+                    "cleared_1600_date": None,
+                    "cleared_1700_date": None,
                     "first_round": time_stamp,
                     "last_round": time_stamp,
                 }
@@ -150,17 +161,60 @@ async def produceStats():
             # Update min/max all-time Elo
             if before_elo > elo_stats[player_account]["max_elo_full"]:
                 elo_stats[player_account]["max_elo_full"] = before_elo
+                elo_stats[player_account]["max_elo_date"] = time_stamp
             if after_elo > elo_stats[player_account]["max_elo_full"]:
                 elo_stats[player_account]["max_elo_full"] = after_elo
+                elo_stats[player_account]["max_elo_date"] = time_stamp
 
             if before_elo < elo_stats[player_account]["min_elo_full"]:
                 elo_stats[player_account]["min_elo_full"] = before_elo
             if after_elo < elo_stats[player_account]["min_elo_full"]:
                 elo_stats[player_account]["min_elo_full"] = after_elo
 
+            # Update Elo threshold-clearing timestamps
+            elo_stats[player_account]["cleared_1300_date"] = getEloThresholdChange(
+                before_elo,
+                after_elo,
+                1300,
+                elo_stats[player_account]["cleared_1300_date"],
+                time_stamp,
+            )
+            elo_stats[player_account]["cleared_1400_date"] = getEloThresholdChange(
+                before_elo,
+                after_elo,
+                1400,
+                elo_stats[player_account]["cleared_1400_date"],
+                time_stamp,
+            )
+            elo_stats[player_account]["cleared_1500_date"] = getEloThresholdChange(
+                before_elo,
+                after_elo,
+                1500,
+                elo_stats[player_account]["cleared_1500_date"],
+                time_stamp,
+            )
+            elo_stats[player_account]["cleared_1600_date"] = getEloThresholdChange(
+                before_elo,
+                after_elo,
+                1600,
+                elo_stats[player_account]["cleared_1600_date"],
+                time_stamp,
+            )
+            elo_stats[player_account]["cleared_1700_date"] = getEloThresholdChange(
+                before_elo,
+                after_elo,
+                1700,
+                elo_stats[player_account]["cleared_1700_date"],
+                time_stamp,
+            )
+
     print("")
     full_stats = calculuateSupplementalStats(elo_stats)
-    outputStats(full_stats)
+
+    if SHOW_OPPONENT_STATS_FOR is not None and SHOW_OPPONENT_STATS_FOR in full_stats:
+        outputPlayerMatchupResults(SHOW_OPPONENT_STATS_FOR, full_stats[SHOW_OPPONENT_STATS_FOR])
+    else:
+        outputFullStats(full_stats)
 
 def calculuateSupplementalStats(elo_stats):
     elite_players = getPlayersByMaxEloCutoff(elo_stats, ELITE_LEVEL_ELO)
@@ -187,27 +241,33 @@ def calculuateSupplementalStats(elo_stats):
 
     return elo_stats
 
-def outputStats(elo_stats):
+def outputFullStats(elo_stats):
     print(TSV_LINE.format(
         "Player Account",
         "Total Rounds Played",
+        "PCT",
         "Total Matchups",
         "Total Wins",
         "Total Losses",
         "Total Ties",
-        "PCT",
-        "1500+ Matchups",
+        "1500+ PCT",
         "Percent Matchups Against 1500+",
+        "1500+ Matchups",
         "1500+ Wins",
         "1500+ Losses",
         "1500+ Ties",
-        "1500+ PCT",
         "Max Elo (All-Time)",
+        "Date of Max Elo",
         "Max Elo (3 months)",
         "Max Elo (1 month)",
         "Min Elo (All-Time)",
         "Min Elo (3 months)",
         "Min Elo (1 month)",
+        "First Cleared 1300",
+        "First Cleared 1400",
+        "First Cleared 1500",
+        "First Cleared 1600",
+        "First Cleared 1700",
         "First Recorded Round",
         "Last Recorded Round",
     ))
@@ -233,28 +293,74 @@ def outputStats(elo_stats):
         output = TSV_LINE.format(
             player,
             player_stats["rounds"],
+            renderWinPercent(win_count, tie_count, total_matches),
             total_matches,
             win_count,
             loss_count,
             tie_count,
-            renderWinPercent(win_count, tie_count, total_matches),
-            elite_matches,
+            renderWinPercent(elite_win_count, elite_tie_count, elite_matches),
             "{0:.1f}".format(elite_match_rate),
+            elite_matches,
             elite_win_count,
             elite_loss_count,
             elite_tie_count,
-            renderWinPercent(elite_win_count, elite_tie_count, elite_matches),
             player_stats["max_elo_full"],
+            renderDate(player_stats["max_elo_date"]),
             player_stats["max_elo_3m"] if show_last_3m else "",
             player_stats["max_elo_1m"] if show_last_1m else "",
             player_stats["min_elo_full"],
             player_stats["min_elo_3m"] if show_last_3m else "",
             player_stats["min_elo_1m"] if show_last_1m else "",
-            player_stats["first_round"].strftime("%Y-%m-%d"),
-            player_stats["last_round"].strftime("%Y-%m-%d"),
+            renderDate(player_stats["cleared_1300_date"]),
+            renderDate(player_stats["cleared_1400_date"]),
+            renderDate(player_stats["cleared_1500_date"]),
+            renderDate(player_stats["cleared_1600_date"]),
+            renderDate(player_stats["cleared_1700_date"]),
+            renderDate(player_stats["first_round"]),
+            renderDate(player_stats["last_round"]),
         )
         print(output)
     
+def outputPlayerMatchupResults(target_player, player_stats):
+    results_per_opponent = {}
+
+    for won_against_player in player_stats["wins"]:
+        if not won_against_player in results_per_opponent:
+            results_per_opponent[won_against_player] = initWinLossTieDict()
+
+        results_per_opponent[won_against_player]["wins"] += 1
+
+    for lost_to_player in player_stats["losses"]:
+        if not lost_to_player in results_per_opponent:
+            results_per_opponent[lost_to_player] = initWinLossTieDict()
+
+        results_per_opponent[lost_to_player]["losses"] += 1
+
+    for tied_with_player in player_stats["ties"]:
+        if not tied_with_player in results_per_opponent:
+            results_per_opponent[tied_with_player] = initWinLossTieDict()
+
+        results_per_opponent[tied_with_player]["ties"] += 1
+
+    sorted_opponents = sorted(results_per_opponent.keys(), key=str.lower)
+
+    print("Per-opponent Win/Loss/Tie stats for MGSR Ladder player {}".format(target_player))
+    print("")
+    print("=== FORMAT ===")
+    print("Opponent: PCT (W-L-T)")
+    print("")
+    for opponent_name in sorted_opponents:
+        opponent_results = results_per_opponent[opponent_name]
+        total_matches = opponent_results["wins"] + opponent_results["losses"] + opponent_results["ties"]
+        print("{}: {} ({}-{}-{})".format(
+            opponent_name,
+            renderWinPercent(opponent_results["wins"], opponent_results["ties"], total_matches),
+            opponent_results["wins"],
+            opponent_results["losses"],
+            opponent_results["ties"],
+        ))
+
+
 def evaluateRecord(record_fields):
     record_count = len(record_fields)
     parsed_records = []
@@ -320,6 +426,31 @@ def normalizeAccountName(account_name):
 
     return account_name
 
+def getEloThresholdChange(before_elo, after_elo, elo_threshold, current_clear_date, record_timestamp):
+    if before_elo < elo_threshold and after_elo >= elo_threshold:
+        # A threshold is being crossed in this record
+
+        if current_clear_date is None:
+            # First time (in time-descending order) this threshold was crossed
+            return record_timestamp
+
+        if record_timestamp < current_clear_date:
+            # This threshold-cross happened earlier than the previously noted one
+            return record_timestamp
+
+    if before_elo >= elo_threshold:
+        # Clear marked date because an earlier record was already above that threshold
+        return None
+
+    return current_clear_date
+
+def initWinLossTieDict():
+    return {
+        "wins": 0,
+        "losses": 0,
+        "ties": 0,
+    }
+
 def renderWinPercent(win_count, tie_count, total_matches):
     if total_matches == 0:
         return ".000"
@@ -331,6 +462,15 @@ def renderWinPercent(win_count, tie_count, total_matches):
 
     rounded_pct = round(win_percentage, 3)
     return ("{0:.3f}".format(rounded_pct))[1:]
+
+def renderDate(raw_datetime):
+    if raw_datetime == "N/A":
+        return "Not Enough Data"
+
+    if raw_datetime is None:
+        return ""
+
+    return raw_datetime.strftime("%Y-%m-%d")
 
 def getPlayersByMaxEloCutoff(stats_per_player, max_elo_cutoff):
     exceeding_players = []
