@@ -11,6 +11,7 @@ RECORD_UNDO_MSG = "Result Removed"
 SHOW_OPPONENT_STATS_FOR = None
 
 TSV_LINE = "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}"
+PER_PLAYER_TSV_LINE = "{}\t{}\t{}\t{}\t{}\t{}"
 
 ELITE_LEVEL_ELO = 1500
 PRO_LEVEL_ELO = 1400
@@ -69,7 +70,7 @@ async def produceStats():
     need_to_undo_count = 0
 
     print("Fetching messages...")
-    async for message in elo_channel.history(limit = 2900):
+    async for message in elo_channel.history(limit = None):
         if len(message.embeds) == 0:
             continue
 
@@ -344,21 +345,31 @@ def outputPlayerMatchupResults(target_player, player_stats):
 
     sorted_opponents = sorted(results_per_opponent.keys(), key=str.lower)
 
-    print("Per-opponent Win/Loss/Tie stats for MGSR Ladder player {}".format(target_player))
+    print("Per Opponent Stats for MGSR Player: {}".format(target_player))
     print("")
-    print("=== FORMAT ===")
-    print("Opponent: PCT (W-L-T)")
-    print("")
+
+    print(PER_PLAYER_TSV_LINE.format(
+        "Opponents",
+        "Matches",
+        "PCT",
+        "W",
+        "L",
+        "T",
+    ))
+
     for opponent_name in sorted_opponents:
         opponent_results = results_per_opponent[opponent_name]
         total_matches = opponent_results["wins"] + opponent_results["losses"] + opponent_results["ties"]
-        print("{}: {} ({}-{}-{})".format(
+
+        output = PER_PLAYER_TSV_LINE.format(
             opponent_name,
+            total_matches,
             renderWinPercent(opponent_results["wins"], opponent_results["ties"], total_matches),
             opponent_results["wins"],
             opponent_results["losses"],
             opponent_results["ties"],
-        ))
+        )
+        print(output)
 
 
 def evaluateRecord(record_fields):
@@ -416,7 +427,6 @@ def evaluateRecord(record_fields):
 
         return record_stats
     except Exception:
-        print(json.dumps(record_fields))
         return None
 
 def normalizeAccountName(account_name):
