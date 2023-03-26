@@ -6,6 +6,7 @@ import json
 
 # Script Config
 SHOW_OPPONENT_STATS_FOR = None
+MSG_LIMIT = 100
 
 # Channel IDs
 RECORDING_CHANNEL = 933895315373838416
@@ -85,54 +86,76 @@ async def produceStats():
     need_to_undo_count = 0
 
     elo_stats = {}
+    messages_for_stats = []
 
     # The below method iterates on every message in the channel
     ## "limit = None" means entire history of messages
     ## if limit is specified it will be most recent {limit} messages
     ## This is the main Discord API method we use to fetch message history
-    print("Fetching messages...")
-    async for message in elo_channel.history(limit = None):
+    print("Checking cache...")
+    try:
+        cache_file = open("mgsr_discord_elo.cache", "r")
+        messages_for_stats = json.load(cache_file)[0:MSG_LIMIT]
+    except:
+        messages_for_stats = []
 
-        # The text of TeamUp Elo reports comes in as an "embed" in a message, not raw text
-        # That is why in Discord the text looks slightly indented with non-standard formatting
-        if len(message.embeds) == 0:
-            # If it's a plain message (no embeds), it is not an Elo report -- ignore it
-            continue
+    if len(messages_for_stats) == 0:
+        print("Fetching messages...")
+        async for message in elo_channel.history(limit = MSG_LIMIT):
 
-        elo_info = message.embeds[0].to_dict()
-        if "fields" not in elo_info.keys():
-            continue
+            # The text of TeamUp Elo reports comes in as an "embed" in a message, not raw text
+            # That is why in Discord the text looks slightly indented with non-standard formatting
+            if len(message.embeds) == 0:
+                # If it's a plain message (no embeds), it is not an Elo report -- ignore it
+                continue
 
-        try:
-            # Title of first embed
-            # Will be "Game Recorded: " for the Elo reports we are seeking
-            first_item_name = elo_info["fields"][0]["name"]
-        except Exception:
-            first_item_name = ""
+            elo_info = message.embeds[0].to_dict()
+            if "fields" not in elo_info.keys():
+                continue
 
-        if first_item_name == TEAMUP_SUPPORT_MSG:
-            continue
+            try:
+                # Title of first embed
+                # Will be "Game Recorded: " for the Elo reports we are seeking
+                first_item_name = elo_info["fields"][0]["name"]
+            except Exception:
+                first_item_name = ""
 
-        if first_item_name == RECORD_UNDO_MSG:
-            # Bump the stack indicating subsequent report should be undone
-            # Next actual Elo report will be ignored if this is greater than zero
-            need_to_undo_count += 1
-            continue
+            if first_item_name == TEAMUP_SUPPORT_MSG:
+                continue
 
-        if need_to_undo_count > 0:
-            # Skip a record that has been marked as undone
-            need_to_undo_count -= 1
-            continue
+            if first_item_name == RECORD_UNDO_MSG:
+                # Bump the stack indicating subsequent report should be undone
+                # Next actual Elo report will be ignored if this is greater than zero
+                need_to_undo_count += 1
+                continue
+
+            if need_to_undo_count > 0:
+                # Skip a record that has been marked as undone
+                need_to_undo_count -= 1
+                continue
+
+            # This message is a real record which will count towards the stats
+            # Insert at start of list to preserve time-descending assumption
+            messages_for_stats.insert(0, {
+                "embed_dict": elo_info,
+                "created_time": message.created_at.timestamp(),
+            })
 
         # TODO This is the right spot to write to the lookup cache
         # Will need to end the channel-fetch loop here, and do a second loop for evaluateRecord
+        write_cache_file = open("mgsr_discord_elo.cache", "w")
+        write_cache_file.write(json.dumps(messages_for_stats))
+        write_cache_file.close()
+
+    for message in messages_for_stats:
+        elo_info = message["embed_dict"]
 
         # Process raw strings from Elo report into structured player results
         record_stats = evaluateRecord(elo_info["fields"])
         if record_stats is None:
             continue
 
-        time_stamp = message.created_at
+        time_stamp = datetime.fromtimestamp(message["created_time"], tz=timezone.utc)
         for player_account in record_stats.keys():
 
             # Add the individual W/L/T and Elo info from a single report to the overall stats dataset
