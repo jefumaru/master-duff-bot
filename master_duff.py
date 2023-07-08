@@ -6,7 +6,7 @@ import json
 
 # Script Config
 SHOW_OPPONENT_STATS_FOR = None
-MSG_LIMIT = 100
+MSG_LIMIT = None
 
 # Channel IDs
 RECORDING_CHANNEL = 933895315373838416
@@ -16,30 +16,30 @@ RECORDING_CHANNEL = 933895315373838416
 ## However if they change their actual Discord account name, they need
 ## added here so that the pre/post account name change stats map to same person
 ACCOUNT_ALIAS_LOOKUP = {
-    "Blue Toad": "BT",
-    "sdreb3421": "Dr. Ebick",
-    "drolo253": "Drolo",
-    "Drolo253": "Drolo",
-    "Fat Bowser": "Fat BiddyBuddy",
-    "\\ud835\\udcd5\\ud835\\udcfb\\ud835\\udcf8\\ud835\\udcfc\\ud835\\udcfd\\ud835\\udd02 \\ud835\\udcdc\\ud835\\udcf8\\ud835\\udcf8\\ud835\\udcf7": "Frosty Moon",
-    "Kairi (Uncertified Player)": "Goldy",
-    "saru": "Goosebumps",
-    "**Henry**": "Henry",
-    "*Henry*": "Henry",
-    "__Henry__": "Henry",
-    "LeSinge": "Le Singe",
-    "LeSinge\\ud83d\\udc12": "Le Singe",
-    "[T\\u00e4hl] LeSinge\\ud83d\\udc12": "Le Singe",
-    "Lucifurs friend": "LucifursFriend",
-    "DoctahKush": "MastahKush",
-    "MiYong1986": "LadyMiYong",
-    "Deputy MI-NEIGHBOR-GUY": "NEIGHBOR-GUY",
-    "MI-NEIGHBOR-GUY": "NEIGHBOR-GUY",
-    "Shawn2Sh\u00f8t": "Shawn2Shot",
-    "Shawn2Strk": "Shawn2Shot",
-    "SturgeonHunter0.75 (mjScott)": "SturgeonHunter0.75",
-    "ThatOneGuy": "TheYosh",
-    "\\ud83c\\udfbcWILL\\u2666I\\u2666AM\\u26f3": "Will",
+    "blue toad": "bt",
+    "sdreb3421": "dr. ebick",
+    "drolo253": "drolo",
+    "drolo253": "drolo",
+    "fat bowser": "fat biddybuddy",
+    "\\ud835\\udcd5\\ud835\\udcfb\\ud835\\udcf8\\ud835\\udcfc\\ud835\\udcfd\\ud835\\udd02 \\ud835\\udcdc\\ud835\\udcf8\\ud835\\udcf8\\ud835\\udcf7": "frosty moon",
+    "kairi (uncertified player)": "goldy",
+    "saru": "goosebumps",
+    "**henry**": "henry",
+    "*henry*": "henry",
+    "__henry__": "henry",
+    "lesinge": "le singe",
+    "lesinge\\ud83d\\udc12": "le singe",
+    "[u\\u00e4hl] lesinge\\ud83d\\udc12": "le singe",
+    "lucifurs friend": "lucifursfriend",
+    "doctahkush": "mastahkush",
+    "miyong1986": "ladymiyong",
+    "deputy mi-neighbor-guy": "neighbor-guy",
+    "mi-neighbor-guy": "neighbor-guy",
+    "shawn2sh\u00f8t": "shawn2shot",
+    "shawn2strk": "shawn2shot",
+    "sturgeonhunter0.75 (mjscott)": "sturgeonhunter0.75",
+    "thatoneguy": "theyosh",
+    "\\ud83c\\udfbcWILL\\u2666I\\u2666AM\\u26f3": "will",
     "\\u0561\\u0268\\u057c\\u0236\\u025b\\u0280": "winter"
 }
 
@@ -502,7 +502,8 @@ def evaluateRecord(record_fields):
     except Exception:
         return None
 
-def normalizeAccountName(account_name):
+def normalizeAccountName(raw_name):
+    account_name = raw_name.lower()
     sanitized_name = json.dumps(account_name).replace("\"", "")
     if sanitized_name in ACCOUNT_ALIAS_LOOKUP:
         return ACCOUNT_ALIAS_LOOKUP[sanitized_name]
