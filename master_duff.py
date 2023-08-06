@@ -14,7 +14,9 @@ RECORDING_CHANNEL = 933895315373838416
 # Player Historical Account Name Changes
 ## If a player changes their nickname, they do not need listed here
 ## However if they change their actual Discord account name, they need
+## Many entries here are due to the forced Discord account name change rollout of 2023
 ## added here so that the pre/post account name change stats map to same person
+## All names must be all-lowercase to be properly normalized
 ACCOUNT_ALIAS_LOOKUP = {
     "blue toad": "bt",
     "bt2946": "bt",
@@ -53,6 +55,7 @@ ACCOUNT_ALIAS_LOOKUP = {
     "slickssb": "slick",
     "slickssbu": "slick",
     "sturgeonhunter0.75 (mjscott)": "sturgeonhunter0.75",
+    "tangeloyellowkoopa": "tangelo",
     "theyosh": "thatoneguy",
     "tyoshig19": "thatoneguy",
     "theodore vellum": "theodorevellum",
@@ -155,7 +158,7 @@ async def produceStats():
 
             # This message is a real record which will count towards the stats
             # Insert at start of list to preserve time-descending assumption
-            messages_for_stats.insert(0, {
+            messages_for_stats.append({
                 "embed_dict": elo_info,
                 "created_time": message.created_at.timestamp(),
             })
