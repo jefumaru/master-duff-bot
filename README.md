@@ -6,6 +6,10 @@ Code that powers the "Master Duff" bot in the Mario Golf Super Rush (MGSR) Disco
 * The Elo Ladder is powered by TeamUp Bot, the stats are calcuated by scraping the channel where we report the results of those matches and parsing the standardized text that the TeamUp Bot outputs
 * These rankings and metrics help us decide seeding for in-server tournaments like March Madness as well as our upcoming 2nd League Season
 
+### How to Run
+* Run locally with Python 3.10.9, just `python3 master_duff.py` will log the Bot into the server, and make it live
+* Auth key, not stored here, is needed to run it.  Please contact me or a Server Admin about how to get this.
+
 ### Going Forward
 * The bot is not very interactive at the moment, but when time permits I intend to enable basic Bot-like functionality such as a command akin to "Hi Master Duff, what is my Max Elo ever attained?"
 * Right now the "All-Time" stats only go as far back as Jan 20th, 2022 because the current dedictaed `elo-recording` channel was not established until then.  However, the Elo Ladder was actually first started in Dec 2021 but original the reports/records were scattered in a variety of channels.  If time permits, I'd like to add code to collect those early reports as well.
