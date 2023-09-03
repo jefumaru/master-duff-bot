@@ -5,8 +5,13 @@ import discord
 import json
 
 # Script Config
+## Fill out the account name of a single player here to see their W/L/T history
+## Otherwise, use "None" to get the aggregated stats of all players
 SHOW_OPPONENT_STATS_FOR = None
+
+## Configure how far back in the history of the Discord channel to fetch messages
 MSG_LIMIT = None
+FETCH_SINCE = datetime(2023, 8, 1, 0, 0, 0, tzinfo=timezone.utc)
 
 # Channel IDs
 RECORDING_CHANNEL = 933895315373838416
@@ -37,6 +42,7 @@ ACCOUNT_ALIAS_LOOKUP = {
     "henry9095": "henry",
     "lc9514": "lc",
     "lesinge": "le singe",
+    "lesinge9835": "le singe",
     "lesinge\\ud83d\\udc12": "le singe",
     "[t\\u00e4hl] lesinge\\ud83d\\udc12": "le singe",
     "lucifurs friend": "lucifursfriend",
@@ -44,6 +50,7 @@ ACCOUNT_ALIAS_LOOKUP = {
     "doctahkush": "mastahkush",
     "jefumaru": "maru",
     "manmaru": "maru",
+    "mge icecat": ".icecat.",
     "norris00000": "norris",
     "onetrueed": "me, ed",
     "miyong1986": "ladymiyong",
@@ -116,14 +123,17 @@ async def produceStats():
     ## This is the main Discord API method we use to fetch message history
     print("Checking cache...")
     try:
+        print("...Found cache")
         cache_file = open("mgsr_discord_elo.cache", "r")
         messages_for_stats = json.load(cache_file)[0:MSG_LIMIT]
     except:
         messages_for_stats = []
 
     if len(messages_for_stats) == 0:
-        print("Fetching messages...")
-        async for message in elo_channel.history(limit = MSG_LIMIT):
+        print("...Cache not available")
+        print("")
+        print("Pulling messages from Discord API...")
+        async for message in elo_channel.history(oldest_first = False, limit = MSG_LIMIT, after = FETCH_SINCE):
 
             # The text of TeamUp Elo reports comes in as an "embed" in a message, not raw text
             # That is why in Discord the text looks slightly indented with non-standard formatting
@@ -163,12 +173,14 @@ async def produceStats():
                 "created_time": message.created_at.timestamp(),
             })
 
-        # TODO This is the right spot to write to the lookup cache
         # Will need to end the channel-fetch loop here, and do a second loop for evaluateRecord
         write_cache_file = open("mgsr_discord_elo.cache", "w")
         write_cache_file.write(json.dumps(messages_for_stats))
         write_cache_file.close()
 
+    print("")
+    print("Found {} total records".format(len(messages_for_stats)))
+    print("")
     for message in messages_for_stats:
         elo_info = message["embed_dict"]
 
@@ -179,7 +191,7 @@ async def produceStats():
 
         time_stamp = datetime.fromtimestamp(message["created_time"], tz=timezone.utc)
         for player_account in record_stats.keys():
-
+            
             # Add the individual W/L/T and Elo info from a single report to the overall stats dataset
             record = record_stats[player_account]
             before_elo = record["before_elo"]
