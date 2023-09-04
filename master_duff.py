@@ -40,6 +40,7 @@ ACCOUNT_ALIAS_LOOKUP = {
     "__henry__": "henry",
     "henry8388": "henry",
     "henry9095": "henry",
+    "j.c": "kirbstararts",
     "lc9514": "lc",
     "lesinge": "le singe",
     "lesinge9835": "le singe",
@@ -78,7 +79,7 @@ RECORD_UNDO_MSG = "Result Removed"
 
 # Output skeletons
 TSV_LINE = "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}"
-PER_PLAYER_TSV_LINE = "{}\t{}\t{}\t{}\t{}\t{}"
+PER_PLAYER_TSV_LINE = "{}\t{}\t{}\t{}\t{}\t{}\t{}"
 
 # Stat Calculation Helpers
 ELITE_LEVEL_ELO = 1500
@@ -123,9 +124,9 @@ async def produceStats():
     ## This is the main Discord API method we use to fetch message history
     print("Checking cache...")
     try:
-        print("...Found cache")
         cache_file = open("mgsr_discord_elo.cache", "r")
         messages_for_stats = json.load(cache_file)[0:MSG_LIMIT]
+        print("...Found cache")
     except:
         messages_for_stats = []
 
@@ -185,7 +186,7 @@ async def produceStats():
         elo_info = message["embed_dict"]
 
         # Process raw strings from Elo report into structured player results
-        record_stats = evaluateRecord(elo_info["fields"])
+        record_stats = evaluateRecord(elo_info["fields"], message["created_time"])
         if record_stats is None:
             continue
 
@@ -220,9 +221,26 @@ async def produceStats():
                 }
 
             elo_stats[player_account]["rounds"] += 1
-            elo_stats[player_account]["wins"].extend(record["wins"])
-            elo_stats[player_account]["losses"].extend(record["losses"])
-            elo_stats[player_account]["ties"].extend(record["ties"])
+
+
+            for player in record["wins"]:
+                elo_stats[player_account]["wins"].append({
+                    "player": player,
+                    "timestamp": record["timestamp"],
+                })
+
+            for player in record["losses"]:
+                elo_stats[player_account]["losses"].append({
+                    "player": player,
+                    "timestamp": record["timestamp"],
+                })
+
+            for player in record["ties"]:
+                elo_stats[player_account]["ties"].append({
+                    "player": player,
+                    "timestamp": record["timestamp"],
+                })
+
 
             # Continually update "first_round" with current time since record messages are scanned in time-descending order
             elo_stats[player_account]["first_round"] = time_stamp
@@ -327,15 +345,15 @@ def calculuateSupplementalStats(elo_stats):
 
         # Add a W/L/T if the opponent in question has ever reached the Elite level Elo threshold
         for win_against_player in elo_stats[player]["wins"]:
-            if win_against_player in elite_players:
+            if win_against_player["player"] in elite_players:
                 elo_stats[player]["elite_wins"] += 1
 
         for lose_to_player in elo_stats[player]["losses"]:
-            if lose_to_player in elite_players:
+            if lose_to_player["player"] in elite_players:
                 elo_stats[player]["elite_losses"] += 1
 
         for tie_with_player in elo_stats[player]["ties"]:
-            if tie_with_player in elite_players:
+            if tie_with_player["player"] in elite_players:
                 elo_stats[player]["elite_ties"] += 1
 
     return elo_stats
@@ -426,23 +444,35 @@ def outputFullStats(elo_stats):
     
 def outputPlayerMatchupResults(target_player, player_stats):
     results_per_opponent = {}
-    for won_against_player in player_stats["wins"]:
+    for won_against_data in player_stats["wins"]:
+        won_against_player = won_against_data["player"]
+        won_time = won_against_data["timestamp"]
         if not won_against_player in results_per_opponent:
-            results_per_opponent[won_against_player] = initWinLossTieDict()
+            results_per_opponent[won_against_player] = initWinLossTieDict(won_time)
 
         results_per_opponent[won_against_player]["wins"] += 1
+        if won_time > results_per_opponent[won_against_player]["most_recent_match"]:
+            results_per_opponent[won_against_player]["most_recent_match"] = won_time
 
-    for lost_to_player in player_stats["losses"]:
+    for lost_to_data in player_stats["losses"]:
+        lost_to_player = lost_to_data["player"]
+        lost_time = lost_to_data["timestamp"]
         if not lost_to_player in results_per_opponent:
-            results_per_opponent[lost_to_player] = initWinLossTieDict()
+            results_per_opponent[lost_to_player] = initWinLossTieDict(lost_time)
 
         results_per_opponent[lost_to_player]["losses"] += 1
+        if lost_time > results_per_opponent[lost_to_player]["most_recent_match"]:
+            results_per_opponent[lost_to_player]["most_recent_match"] = lost_time
 
-    for tied_with_player in player_stats["ties"]:
+    for tied_with_data in player_stats["ties"]:
+        tied_with_player = tied_with_data["player"]
+        tied_time = tied_with_data["timestamp"]
         if not tied_with_player in results_per_opponent:
-            results_per_opponent[tied_with_player] = initWinLossTieDict()
+            results_per_opponent[tied_with_player] = initWinLossTieDict(tied_time)
 
         results_per_opponent[tied_with_player]["ties"] += 1
+        if tied_time > results_per_opponent[tied_with_player]["most_recent_match"]:
+            results_per_opponent[tied_with_player]["most_recent_match"] = tied_time
 
     sorted_opponents = sorted(results_per_opponent.keys(), key=str.lower)
 
@@ -457,6 +487,7 @@ def outputPlayerMatchupResults(target_player, player_stats):
         "W",
         "L",
         "T",
+        "Most Recent Match",
     ))
 
     for opponent_name in sorted_opponents:
@@ -470,11 +501,15 @@ def outputPlayerMatchupResults(target_player, player_stats):
             opponent_results["wins"],
             opponent_results["losses"],
             opponent_results["ties"],
+            renderDate(datetime.fromtimestamp(
+                opponent_results["most_recent_match"],
+                tz=timezone.utc,
+            )),
         )
         print(output)
 
 
-def evaluateRecord(record_fields):
+def evaluateRecord(record_fields, record_timestamp):
     parsed_records = []
     record_stats = {}
     try:
@@ -507,6 +542,7 @@ def evaluateRecord(record_fields):
 
             # Init object to evaluate the W/L/T outcome of this record
             record_stats[player_account] = {
+                "timestamp": record_timestamp,
                 "placement": record_entry["placement"],
                 "before_elo": record_entry["before_elo"],
                 "after_elo": record_entry["after_elo"],
@@ -565,11 +601,12 @@ def getEloThresholdChange(before_elo, after_elo, elo_threshold, current_clear_da
 
     return current_clear_date
 
-def initWinLossTieDict():
+def initWinLossTieDict(most_recent_match):
     return {
         "wins": 0,
         "losses": 0,
         "ties": 0,
+        "most_recent_match": most_recent_match,
     }
 
 def renderWinPercent(win_count, tie_count, total_matches):
