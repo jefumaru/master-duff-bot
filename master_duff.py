@@ -11,7 +11,11 @@ SHOW_OPPONENT_STATS_FOR = None
 
 ## Configure how far back in the history of the Discord channel to fetch messages
 MSG_LIMIT = None
-FETCH_SINCE = datetime(2023, 8, 1, 0, 0, 0, tzinfo=timezone.utc)
+
+#FETCH_SINCE = datetime(2023, 9, 1, 0, 0, 0, tzinfo=timezone.utc)
+FETCH_SINCE = None
+#FETCH_BEFORE = datetime(2023, 10, 1, 0, 0, 0, tzinfo=timezone.utc)
+FETCH_BEFORE = None
 
 # Channel IDs
 RECORDING_CHANNEL = 933895315373838416
@@ -62,6 +66,7 @@ ACCOUNT_ALIAS_LOOKUP = {
     "shawn2strk": "shawn2shot",
     "slickssb": "slick",
     "slickssbu": "slick",
+    "splash3000": "splash",
     "sturgeonhunter0.75 (mjscott)": "sturgeonhunter0.75",
     "tangeloyellowkoopa": "tangelo",
     "theyosh": "thatoneguy",
@@ -134,7 +139,7 @@ async def produceStats():
         print("...Cache not available")
         print("")
         print("Pulling messages from Discord API...")
-        async for message in elo_channel.history(oldest_first = False, limit = MSG_LIMIT, after = FETCH_SINCE):
+        async for message in elo_channel.history(oldest_first = False, limit = MSG_LIMIT, after = FETCH_SINCE, before = FETCH_BEFORE):
 
             # The text of TeamUp Elo reports comes in as an "embed" in a message, not raw text
             # That is why in Discord the text looks slightly indented with non-standard formatting
@@ -221,7 +226,6 @@ async def produceStats():
                 }
 
             elo_stats[player_account]["rounds"] += 1
-
 
             for player in record["wins"]:
                 elo_stats[player_account]["wins"].append({
