@@ -12,9 +12,9 @@ SHOW_OPPONENT_STATS_FOR = None
 ## Configure how far back in the history of the Discord channel to fetch messages
 MSG_LIMIT = None
 
-#FETCH_SINCE = datetime(2023, 9, 1, 0, 0, 0, tzinfo=timezone.utc)
+#FETCH_SINCE = datetime(2023, 5, 1, 0, 0, 0, tzinfo=timezone.utc)
 FETCH_SINCE = None
-#FETCH_BEFORE = datetime(2023, 10, 1, 0, 0, 0, tzinfo=timezone.utc)
+#FETCH_BEFORE = datetime(2023, 12, 1, 0, 0, 0, tzinfo=timezone.utc)
 FETCH_BEFORE = None
 
 # Channel IDs
@@ -27,6 +27,8 @@ RECORDING_CHANNEL = 933895315373838416
 ## added here so that the pre/post account name change stats map to same person
 ## All names must be all-lowercase to be properly normalized
 ACCOUNT_ALIAS_LOOKUP = {
+    "alfritz002": "alfritz",
+    "andrew-morse": "andrewmorse.",
     "blue toad": "bt",
     "bt2946": "bt",
     "coos_does_things": "coos",
@@ -35,9 +37,11 @@ ACCOUNT_ALIAS_LOOKUP = {
     "drolo253": "drolo",
     "drolo253": "drolo",
     "fat bowser": "fat biddybuddy",
-    "\\ud835\\udcd5\\ud835\\udcfb\\ud835\\udcf8\\ud835\\udcfc\\ud835\\udcfd\\ud835\\udd02 \\ud835\\udcdc\\ud835\\udcf8\\ud835\\udcf8\\ud835\\udcf7": "frosty moon",
+    "\\ud835\\udcd5\\ud835\\udcfb\\ud835\\udcf8\\ud835\\udcfc\\ud835\\udcfd\\ud835\\udd02 \\ud835\\udcdc\\ud835\\udcf8\\ud835\\udcf8\\ud835\\udcf7": "frostymoon",
     "kairi (uncertified player)": "goldy",
     "saru": "goosebumps",
+    "goosebumpsnz": "goosebumps",
+    ".grauwulf": "grauwulf",
     "graveyard420woo": "graveyard",
     "**henry**": "henry",
     "*henry*": "henry",
@@ -55,13 +59,16 @@ ACCOUNT_ALIAS_LOOKUP = {
     "doctahkush": "mastahkush",
     "jefumaru": "maru",
     "manmaru": "maru",
+    "_mcclary_84": "mcclary",
     "mge icecat": ".icecat.",
     "norris00000": "norris",
     "onetrueed": "me, ed",
     "miyong1986": "ladymiyong",
+    "mrs. chippy": "mrs.chippy",
     "deputy mi-neighbor-guy": "neighbor-guy",
     "ironfist68": "poolguy68",
     "mi-neighbor-guy": "neighbor-guy",
+    "psymar_2210": "psymar",
     "shawn2sh\\u00f8t": "shawn2shot",
     "shawn2strk": "shawn2shot",
     "slickssb": "slick",
@@ -87,7 +94,7 @@ TSV_LINE = "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t
 PER_PLAYER_TSV_LINE = "{}\t{}\t{}\t{}\t{}\t{}\t{}"
 
 # Stat Calculation Helpers
-ELITE_LEVEL_ELO = 1500
+ELITE_LEVEL_ELO = 1575
 PRO_LEVEL_ELO = 1400
 ONE_MONTH_AGO = datetime.now(timezone.utc) + relativedelta(months = -1)
 THREE_MONTHS_AGO = datetime.now(timezone.utc) + relativedelta(months = -3)
@@ -372,12 +379,12 @@ def outputFullStats(elo_stats):
         "Total Wins",
         "Total Losses",
         "Total Ties",
-        "1500+ PCT",
-        "Percent Matchups Against 1500+",
-        "1500+ Matchups",
-        "1500+ Wins",
-        "1500+ Losses",
-        "1500+ Ties",
+        "1575+ PCT",
+        "Percent Matchups Against 1575+",
+        "1575+ Matchups",
+        "1575+ Wins",
+        "1575+ Losses",
+        "1575+ Ties",
         "Max Elo (All-Time)",
         "Date of Max Elo",
         "Max Elo (3 months)",
