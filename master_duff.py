@@ -159,6 +159,7 @@ async def produceStats():
                 # If it's a plain message (no embeds), it is not an Elo report -- ignore it
                 continue
 
+            # To see what the format of this JSON is, please check README.md
             elo_info = message.embeds[0].to_dict()
             if "fields" not in elo_info.keys():
                 continue
