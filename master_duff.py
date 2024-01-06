@@ -17,6 +17,10 @@ FETCH_SINCE = None
 #FETCH_BEFORE = datetime(2023, 12, 1, 0, 0, 0, tzinfo=timezone.utc)
 FETCH_BEFORE = None
 
+# Which Elo-Ladder Season are we seeking?
+# None means ignore season value
+LADDER_SEASON = None
+
 # Channel IDs
 RECORDING_CHANNEL = 933895315373838416
 
@@ -86,6 +90,7 @@ ACCOUNT_ALIAS_LOOKUP = {
 }
 
 # Strings that appear in Non-Success Recording cases
+TEAMUP_ERROR_TITLE = "There was an issue"
 TEAMUP_SUPPORT_MSG = "Visit the Team Up Discord Support Server"
 RECORD_UNDO_MSG = "Result Removed"
 
@@ -159,11 +164,19 @@ async def produceStats():
                 continue
 
             try:
-                # Title of first embed
-                # Will be "Game Recorded: " for the Elo reports we are seeking
+                # Title of embed
+                # Will start with "Game Recorded: " for the Elo reports we are seeking
+                # Will be "Game Removed" for Undo records
+                record_title = elo_info["title"]
+
+                # Text of first embed, used to determine failed records
                 first_item_name = elo_info["fields"][0]["name"]
             except Exception:
                 first_item_name = ""
+                record_title = ""
+
+            if record_title == TEAMUP_ERROR_TITLE:
+                continue
 
             if first_item_name == TEAMUP_SUPPORT_MSG:
                 continue
@@ -177,6 +190,12 @@ async def produceStats():
             if need_to_undo_count > 0:
                 # Skip a record that has been marked as undone
                 need_to_undo_count -= 1
+                continue
+
+            title_parts = record_title.split(" ")
+            leaderboard_name = title_parts[len(title_parts) - 1].lower().replace("*", "")
+            if LADDER_SEASON is not None and leaderboard_name != LADDER_SEASON:
+                # This record is not part of the season we are looking for
                 continue
 
             # This message is a real record which will count towards the stats
