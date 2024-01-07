@@ -22,22 +22,22 @@ This is what the JSON captures by the output of the TeamUp bot looks like:
     {
       "name": ":first_place: 1st :first_place:",
       "value": "***norris00000***\n1s Rating\n(1382 -> 1407)",
-      "inline": True
+      "inline": true
     },
     {
       "name": ":first_place: 1st :first_place:",
       "value": "***speedmcdemon***\n1s Rating\n(1512 -> 1516)",
-      "inline": True
+      "inline": true
     },
     {
       "name": ":third_place: 3rd :third_place:",
       "value": "***maxn301***\n1s Rating\n(1429 -> 1404)",
-      "inline": True
+      "inline": true
     },
     {
       "name": ":third_place: 3rd :third_place:",
       "value": "***.grauwulf***\n1s Rating\n(1305 -> 1301)",
-      "inline": True
+      "inline": true
     }
   ],
   "footer": {
