@@ -14,34 +14,34 @@ Code that powers the "Master Duff" bot in the Mario Golf Super Rush (MGSR) Disco
 This is what the JSON captures by the output of the TeamUp bot looks like:
 ```json
 {
-  'title': 'Game Recorded: **1v1v1v1 MGSR**'
-  'color': 16730441,
-  'type': 'rich',
-  'description': ':trophy: [Visit the 1s leaderboard](https://teamupdiscord.com/leaderboard/server/812794920158363688/game/bWdzcg==/versus/1) :trophy:',
-  'fields': [
+  "title": "Game Recorded: **1v1v1v1 MGSR**",
+  "color": 16730441,
+  "type": "rich",
+  "description": ":trophy: [Visit the 1s leaderboard](https://teamupdiscord.com/leaderboard/server/812794920158363688/game/bWdzcg==/versus/1) :trophy:",
+  "fields": [
     {
-      'name': ':first_place: 1st :first_place:',
-      'value': '***norris00000***\n1s Rating\n(1382 -> 1407)',
-      'inline': True
+      "name": ":first_place: 1st :first_place:",
+      "value": "***norris00000***\n1s Rating\n(1382 -> 1407)",
+      "inline": True
     },
     {
-      'name': ':first_place: 1st :first_place:',
-      'value': '***speedmcdemon***\n1s Rating\n(1512 -> 1516)',
-      'inline': True
+      "name": ":first_place: 1st :first_place:",
+      "value": "***speedmcdemon***\n1s Rating\n(1512 -> 1516)",
+      "inline": True
     },
     {
-      'name': ':third_place: 3rd :third_place:',
-      'value': '***maxn301***\n1s Rating\n(1429 -> 1404)',
-      'inline': True
+      "name": ":third_place: 3rd :third_place:",
+      "value": "***maxn301***\n1s Rating\n(1429 -> 1404)",
+      "inline": True
     },
     {
-      'name': ':third_place: 3rd :third_place:',
-      'value': '***.grauwulf***\n1s Rating\n(1305 -> 1301)',
-      'inline': True
+      "name": ":third_place: 3rd :third_place:",
+      "value": "***.grauwulf***\n1s Rating\n(1305 -> 1301)",
+      "inline": True
     }
   ],
-  'footer': {
-    'text': "Use the `/undo-record` command to undo this recording\nUse the `/view reputation` command to view a player's feedback rating."
+  "footer": {
+    "text": "Use the `/undo-record` command to undo this recording\nUse the `/view reputation` command to view a player's feedback rating."
   },
 }
 ```
