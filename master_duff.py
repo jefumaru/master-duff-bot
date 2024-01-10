@@ -19,7 +19,7 @@ FETCH_BEFORE = None
 
 # Which Elo-Ladder Season are we seeking?
 # None means ignore season value
-LADDER_SEASON = None
+LADDER_SEASON = "mgsr"
 
 # Channel IDs
 RECORDING_CHANNEL = 933895315373838416
@@ -37,6 +37,7 @@ ACCOUNT_ALIAS_LOOKUP = {
     "bt2946": "bt",
     "coos_does_things": "coos",
     "sdreb3421": "dr. ebick",
+    ".deathpony": "deathpony",
     "dr.ebick": "dr. ebick",
     "drolo253": "drolo",
     "drolo253": "drolo",
@@ -64,7 +65,8 @@ ACCOUNT_ALIAS_LOOKUP = {
     "jefumaru": "maru",
     "manmaru": "maru",
     "_mcclary_84": "mcclary",
-    "mge icecat": ".icecat.",
+    "mge icecat": "icecat",
+    ".icecat.": "icecat",
     "norris00000": "norris",
     "onetrueed": "me, ed",
     "miyong1986": "ladymiyong",
@@ -99,7 +101,7 @@ TSV_LINE = "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t
 PER_PLAYER_TSV_LINE = "{}\t{}\t{}\t{}\t{}\t{}\t{}"
 
 # Stat Calculation Helpers
-ELITE_LEVEL_ELO = 1575
+ELITE_LEVEL_ELO = 1580
 PRO_LEVEL_ELO = 1400
 ONE_MONTH_AGO = datetime.now(timezone.utc) + relativedelta(months = -1)
 THREE_MONTHS_AGO = datetime.now(timezone.utc) + relativedelta(months = -3)
@@ -512,12 +514,12 @@ def outputPlayerMatchupResults(target_player, player_stats):
 
     # More simple spreadsheet-friendly TSV output format for per-opponent record stats
     print(PER_PLAYER_TSV_LINE.format(
-        "Opponents",
-        "Matches",
-        "PCT",
+        "Opponent",
         "W",
         "L",
         "T",
+        "PCT",
+        "Matches",
         "Most Recent Match",
     ))
 
@@ -527,11 +529,11 @@ def outputPlayerMatchupResults(target_player, player_stats):
 
         output = PER_PLAYER_TSV_LINE.format(
             opponent_name,
-            total_matches,
-            renderWinPercent(opponent_results["wins"], opponent_results["ties"], total_matches),
             opponent_results["wins"],
             opponent_results["losses"],
             opponent_results["ties"],
+            renderWinPercent(opponent_results["wins"], opponent_results["ties"], total_matches),
+            total_matches,
             renderDate(datetime.fromtimestamp(
                 opponent_results["most_recent_match"],
                 tz=timezone.utc,
