@@ -102,7 +102,6 @@ PER_PLAYER_TSV_LINE = "{}\t{}\t{}\t{}\t{}\t{}\t{}"
 
 # Stat Calculation Helpers
 ELITE_LEVEL_ELO = 1580
-PRO_LEVEL_ELO = 1400
 ONE_MONTH_AGO = datetime.now(timezone.utc) + relativedelta(months = -1)
 THREE_MONTHS_AGO = datetime.now(timezone.utc) + relativedelta(months = -3)
 
@@ -401,12 +400,12 @@ def outputFullStats(elo_stats):
         "Total Wins",
         "Total Losses",
         "Total Ties",
-        "1575+ PCT",
-        "Percent Matchups Against 1575+",
-        "1575+ Matchups",
-        "1575+ Wins",
-        "1575+ Losses",
-        "1575+ Ties",
+        "{}+ PCT".format(ELITE_LEVEL_ELO),
+        "Percent Matchups Against {}+".format(ELITE_LEVEL_ELO),
+        "{}+ Matchups".format(ELITE_LEVEL_ELO),
+        "{}+ Wins".format(ELITE_LEVEL_ELO),
+        "{}+ Losses".format(ELITE_LEVEL_ELO),
+        "{}+ Ties".format(ELITE_LEVEL_ELO),
         "Max Elo (All-Time)",
         "Date of Max Elo",
         "Max Elo (3 months)",
