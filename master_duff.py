@@ -12,14 +12,14 @@ SHOW_OPPONENT_STATS_FOR = None
 ## Configure how far back in the history of the Discord channel to fetch messages
 MSG_LIMIT = None
 
-#FETCH_SINCE = datetime(2023, 5, 1, 0, 0, 0, tzinfo=timezone.utc)
+#FETCH_SINCE = datetime(2023, 11, 1, 0, 0, 0, tzinfo=timezone.utc)
 FETCH_SINCE = None
-#FETCH_BEFORE = datetime(2023, 12, 1, 0, 0, 0, tzinfo=timezone.utc)
+#FETCH_BEFORE = datetime(2024, 2, 1, 0, 0, 0, tzinfo=timezone.utc)
 FETCH_BEFORE = None
 
 # Which Elo-Ladder Season are we seeking?
 # None means ignore season value
-LADDER_SEASON = "mgsr"
+LADDER_SEASON = "mgsr2"
 
 # Channel IDs
 RECORDING_CHANNEL = 933895315373838416
@@ -225,10 +225,11 @@ async def produceStats():
 
         time_stamp = datetime.fromtimestamp(message["created_time"], tz=timezone.utc)
         for player_account in record_stats.keys():
-            
+
             # Add the individual W/L/T and Elo info from a single report to the overall stats dataset
             record = record_stats[player_account]
             before_elo = record["before_elo"]
+
             if player_account not in elo_stats.keys():
                 # Add new blank record in overall Elo dataset if this player name hasn't appeared yet
                 elo_stats[player_account] = {
@@ -237,7 +238,7 @@ async def produceStats():
                     "losses": [],
                     "ties": [],
                     "max_elo_full": before_elo,
-                    "max_elo_date": None,
+                    "max_elo_date": time_stamp,
                     "min_elo_full": before_elo,
                     "max_elo_3m": before_elo,
                     "min_elo_3m": before_elo,
