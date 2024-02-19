@@ -237,6 +237,7 @@ async def produceStats():
                     "wins": [],
                     "losses": [],
                     "ties": [],
+                    "avg_opponent_pct": 0,
                     "max_elo_full": before_elo,
                     "max_elo_date": time_stamp,
                     "min_elo_full": before_elo,
@@ -377,17 +378,36 @@ def calculuateSupplementalStats(elo_stats):
         elo_stats[player]["elite_ties"] = 0
 
         # Add a W/L/T if the opponent in question has ever reached the Elite level Elo threshold
+        all_match_opponents = []
         for win_against_player in elo_stats[player]["wins"]:
+            all_match_opponents.append(win_against_player["player"])
             if win_against_player["player"] in elite_players:
                 elo_stats[player]["elite_wins"] += 1
 
         for lose_to_player in elo_stats[player]["losses"]:
+            all_match_opponents.append(lose_to_player["player"])
             if lose_to_player["player"] in elite_players:
                 elo_stats[player]["elite_losses"] += 1
 
         for tie_with_player in elo_stats[player]["ties"]:
+            all_match_opponents.append(tie_with_player["player"])
             if tie_with_player["player"] in elite_players:
                 elo_stats[player]["elite_ties"] += 1
+
+        # Calculate Average Opponent PCT
+        ## This stat is basically our closest proxy for Strength of Schedule
+        opponent_pct_list = []
+        for opponent in all_match_opponents:
+            wins = len(elo_stats[opponent]["wins"])
+            losses = len(elo_stats[opponent]["losses"])
+            ties = len(elo_stats[opponent]["ties"])
+            opponent_pct_list.append(float(renderWinPercent(
+                wins,
+                ties,
+                wins + losses + ties,
+            )))
+        opponents_pct = round(sum(opponent_pct_list) / len(opponent_pct_list), 3)
+        elo_stats[player]["avg_opponent_pct"] = ("{0:.3f}".format(opponents_pct))[1:]
 
     return elo_stats
 
@@ -396,17 +416,18 @@ def outputFullStats(elo_stats):
     print(TSV_LINE.format(
         "Player Account",
         "Total Rounds Played",
-        "PCT",
         "Total Matchups",
         "Total Wins",
         "Total Losses",
         "Total Ties",
-        "{}+ PCT".format(ELITE_LEVEL_ELO),
+        "PCT",
+        "Avg Opponent PCT",
         "Percent Matchups Against {}+".format(ELITE_LEVEL_ELO),
         "{}+ Matchups".format(ELITE_LEVEL_ELO),
         "{}+ Wins".format(ELITE_LEVEL_ELO),
         "{}+ Losses".format(ELITE_LEVEL_ELO),
         "{}+ Ties".format(ELITE_LEVEL_ELO),
+        "{}+ PCT".format(ELITE_LEVEL_ELO),
         "Max Elo (All-Time)",
         "Date of Max Elo",
         "Max Elo (3 months)",
@@ -447,17 +468,18 @@ def outputFullStats(elo_stats):
         output = TSV_LINE.format(
             player,
             player_stats["rounds"],
-            renderWinPercent(win_count, tie_count, total_matches),
             total_matches,
             win_count,
             loss_count,
             tie_count,
-            renderWinPercent(elite_win_count, elite_tie_count, elite_matches),
+            renderWinPercent(win_count, tie_count, total_matches),
+            player_stats["avg_opponent_pct"],
             "{0:.1f}".format(elite_match_rate),
             elite_matches,
             elite_win_count,
             elite_loss_count,
             elite_tie_count,
+            renderWinPercent(elite_win_count, elite_tie_count, elite_matches),
             player_stats["max_elo_full"],
             renderDate(player_stats["max_elo_date"]),
             player_stats["max_elo_3m"] if show_last_3m else "",
