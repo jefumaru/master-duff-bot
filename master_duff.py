@@ -30,6 +30,7 @@ RECORDING_CHANNEL = 933895315373838416
 ## Many entries here are due to the forced Discord account name change rollout of 2023
 ## added here so that the pre/post account name change stats map to same person
 ## All names must be all-lowercase to be properly normalized
+
 ACCOUNT_ALIAS_LOOKUP = {
     "alfritz002": "alfritz",
     "andrew-morse": "andrewmorse.",
@@ -51,6 +52,7 @@ ACCOUNT_ALIAS_LOOKUP = {
     "**henry**": "henry",
     "*henry*": "henry",
     "__henry__": "henry",
+    "henry_0000": "henry",
     "henry8388": "henry",
     "henry9095": "henry",
     "j.c": "kirbstararts",
@@ -67,7 +69,8 @@ ACCOUNT_ALIAS_LOOKUP = {
     "_mcclary_84": "mcclary",
     "mge icecat": "icecat",
     ".icecat.": "icecat",
-    "norris00000": "norris",
+    "norris00000": "norah",
+    "nora000000000": "norah",
     "onetrueed": "me, ed",
     "miyong1986": "ladymiyong",
     "mrs. chippy": "mrs.chippy",
@@ -120,7 +123,7 @@ async def on_ready():
 @client.event
 async def on_message(message):
     # TODO: Add actual bot interactivity someday
-    if message.author.display_name != "manmaru":
+    if message.author.display_name != "Maru":
         return
 
     if message.content.startswith('Are you Master Duff'):
